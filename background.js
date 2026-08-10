@@ -1,5 +1,8 @@
 const ONE_PASSWORD_POPUP = 'chrome-extension://aeblfdkhhhdcdjpifhhbdiojplfjncoa/popup/index.html'
-const REWARM_MINUTES = 30
+// Chrome freezes hidden pages after ~5 minutes and V8 then flushes compiled
+// code that hasn't executed recently — the warm instance quietly goes cold.
+// Reloading inside that window keeps the code perpetually "recently used".
+const REWARM_MINUTES = 4
 
 async function findWarmTab() {
   const tabs = await chrome.tabs.query({})
@@ -56,4 +59,10 @@ chrome.runtime.onStartup.addListener(ensureWarm)
 chrome.alarms.create('rewarm', { periodInMinutes: REWARM_MINUTES })
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === 'rewarm') ensureWarm()
+})
+
+// Alarms don't fire while the machine sleeps, so the instance can be cold at
+// the exact moment the user sits back down — rewarm as soon as they return.
+chrome.idle.onStateChanged.addListener(state => {
+  if (state === 'active') ensureWarm()
 })

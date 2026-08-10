@@ -27,10 +27,14 @@ This extension:
 1. Opens the 1Password popup page in a separate Chrome window created directly
    in the **minimized** state — it never appears on screen and takes no
    tab-strip space.
-2. Reloads it every 30 minutes, which revives it if Memory Saver discarded it
-   and re-executes the scripts so 1Password stays at the front of Chrome's
-   code-cache LRU.
-3. Recreates the hidden window automatically if it's ever closed, and on every
+2. Reloads it every 4 minutes. Chrome freezes hidden pages after ~5 minutes
+   and V8 then flushes compiled code that hasn't run recently, which silently
+   turns the warm instance cold again — re-executing inside that window keeps
+   the code perpetually "recently used" (and revives the tab if Memory Saver
+   discarded it).
+3. Rewarms immediately when the system returns from idle, since alarms don't
+   fire while the machine sleeps.
+4. Recreates the hidden window automatically if it's ever closed, and on every
    browser startup.
 
 ## Install
@@ -50,7 +54,8 @@ Two constants at the top of [background.js](background.js):
   Store 1Password extension (`aeblfdkhhhdcdjpifhhbdiojplfjncoa`). The same
   trick works for **any** heavy extension: point this at its popup page
   (find the path in the extension's `manifest.json` under `action.default_popup`).
-- `REWARM_MINUTES` — reload cadence. 30 minutes is plenty.
+- `REWARM_MINUTES` — reload cadence. Keep it under 5: that's when Chrome
+  freezes hidden pages and V8 starts flushing their compiled code.
 
 ## Bonus: raise Chrome's code-cache caps (macOS)
 
