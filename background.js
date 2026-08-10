@@ -7,24 +7,24 @@ async function findWarmTab() {
 }
 
 async function openHiddenWarmWindow() {
-  // Asking for state: 'minimized' at creation is unreliable on macOS — the
-  // window can appear normally anyway. Create it small and unfocused, then
-  // force-minimize, which works everywhere.
-  let warmWindow
-  try {
-    warmWindow = await chrome.windows.create({
-      url: ONE_PASSWORD_POPUP,
-      focused: false,
-      width: 320,
-      height: 200
-    })
-  } catch (error) {
-    // Some Chrome versions refuse cross-extension URLs at window creation;
-    // fall back to creating the window empty and navigating the tab into it.
-    warmWindow = await chrome.windows.create({ focused: false, width: 320, height: 200 })
-    await chrome.tabs.update(warmWindow.tabs[0].id, { url: ONE_PASSWORD_POPUP })
-  }
+  // A window can't be born minimized reliably (macOS ignores the state), so
+  // shrink the flash instead: a tiny blank popup-type window tucked in the
+  // screen corner, minimized before anything paints, and only then navigated
+  // to the 1Password page — the heavy UI loads entirely while hidden.
+  const warmWindow = await createCornerWindow()
   await chrome.windows.update(warmWindow.id, { state: 'minimized' })
+  await chrome.tabs.update(warmWindow.tabs[0].id, { url: ONE_PASSWORD_POPUP })
+}
+
+async function createCornerWindow() {
+  const shape = { type: 'popup', focused: false, width: 250, height: 100 }
+  try {
+    // Oversized coordinates get clamped to the nearest screen edge, tucking
+    // the one visible frame into the bottom-right corner.
+    return await chrome.windows.create({ ...shape, left: 20000, top: 20000 })
+  } catch (error) {
+    return await chrome.windows.create(shape)
+  }
 }
 
 async function minimizeIfEscaped(warmTab) {
