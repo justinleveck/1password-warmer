@@ -34,7 +34,10 @@ This extension:
    discarded it).
 3. Rewarms immediately when the system returns from idle, since alarms don't
    fire while the machine sleeps.
-4. Recreates the hidden window automatically if it's ever closed, and on every
+4. Rewarms the moment the 1Password extension itself updates — a new bundle
+   has zero compiled code anywhere, so the update toll gets paid in the hidden
+   window instead of on your next click.
+5. Recreates the hidden window automatically if it's ever closed, and on every
    browser startup.
 
 ## Install
@@ -73,6 +76,25 @@ organization" because a policy is set — that's cosmetic. Revert with:
 ```bash
 defaults delete com.google.Chrome DiskCacheSize
 ```
+
+## Bonus: pre-pay the post-Chrome-update stall (macOS)
+
+When Chrome updates, the first 1Password use afterward can stall 30–40
+seconds: 1Password's native helper verifies the browser's code signature, and
+macOS must hash the entire ~1GB framework of the brand-new binary on demand.
+
+The [extras](extras/) folder has a launchd agent that watches Chrome's
+framework directory and runs `codesign --verify --deep` in the background the
+moment an update lands, so the kernel's signature cache is already warm before
+you click anything:
+
+```bash
+sed "s|REPLACE_WITH_ABSOLUTE_PATH|$(pwd)|" extras/com.onepassword-warmer.chrome-signature-prewarm.plist \
+  > ~/Library/LaunchAgents/com.onepassword-warmer.chrome-signature-prewarm.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.onepassword-warmer.chrome-signature-prewarm.plist
+```
+
+Run from the repo root. Uninstall with `launchctl bootout` and delete the plist.
 
 ## Caveats
 

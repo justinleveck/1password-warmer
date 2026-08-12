@@ -1,4 +1,5 @@
-const ONE_PASSWORD_POPUP = 'chrome-extension://aeblfdkhhhdcdjpifhhbdiojplfjncoa/popup/index.html'
+const ONE_PASSWORD_ID = 'aeblfdkhhhdcdjpifhhbdiojplfjncoa'
+const ONE_PASSWORD_POPUP = `chrome-extension://${ONE_PASSWORD_ID}/popup/index.html`
 // Chrome freezes hidden pages after ~5 minutes and V8 then flushes compiled
 // code that hasn't executed recently — the warm instance quietly goes cold.
 // Reloading inside that window keeps the code perpetually "recently used".
@@ -65,4 +66,14 @@ chrome.alarms.onAlarm.addListener(alarm => {
 // the exact moment the user sits back down — rewarm as soon as they return.
 chrome.idle.onStateChanged.addListener(state => {
   if (state === 'active') ensureWarm()
+})
+
+// When 1Password itself updates, its pages die and the new bundle has zero
+// compiled code anywhere — rewarm at update time so the first click after an
+// update doesn't pay the full compile.
+chrome.management.onInstalled.addListener(info => {
+  if (info.id === ONE_PASSWORD_ID) ensureWarm()
+})
+chrome.management.onEnabled.addListener(info => {
+  if (info.id === ONE_PASSWORD_ID) ensureWarm()
 })
