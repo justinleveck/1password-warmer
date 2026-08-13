@@ -5,9 +5,9 @@ const ONE_PASSWORD_POPUP = `chrome-extension://${ONE_PASSWORD_ID}/popup/index.ht
 // Reloading inside that window keeps the code perpetually "recently used".
 const REWARM_MINUTES = 4
 
-async function findWarmTab() {
+async function findWarmTabs() {
   const tabs = await chrome.tabs.query({})
-  return tabs.find(tab => tab.url && tab.url.startsWith(ONE_PASSWORD_POPUP))
+  return tabs.filter(tab => tab.url && tab.url.startsWith(ONE_PASSWORD_POPUP))
 }
 
 async function openHiddenWarmWindow() {
@@ -41,8 +41,19 @@ async function minimizeIfEscaped(warmTab) {
   }
 }
 
-async function ensureWarm() {
-  const warmTab = await findWarmTab()
+// Startup, alarm, and idle triggers can fire near-simultaneously; without
+// serialization two of them race past the "no warm tab yet" check and each
+// create a window.
+let warming = null
+
+function ensureWarm() {
+  warming ??= rewarm().finally(() => { warming = null })
+  return warming
+}
+
+async function rewarm() {
+  const [warmTab, ...duplicates] = await findWarmTabs()
+  await Promise.all(duplicates.map(duplicate => chrome.tabs.remove(duplicate.id)))
   if (!warmTab) {
     await openHiddenWarmWindow()
     return
