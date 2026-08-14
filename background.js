@@ -69,8 +69,12 @@ chrome.runtime.onInstalled.addListener(ensureWarm)
 chrome.runtime.onStartup.addListener(ensureWarm)
 
 chrome.alarms.create('rewarm', { periodInMinutes: REWARM_MINUTES })
-chrome.alarms.onAlarm.addListener(alarm => {
-  if (alarm.name === 'rewarm') ensureWarm()
+chrome.alarms.onAlarm.addListener(async alarm => {
+  if (alarm.name !== 'rewarm') return
+  // Nobody benefits from a warm popup while the user is away — skip the
+  // reload and let the return-from-idle listener rewarm on arrival.
+  const state = await chrome.idle.queryState(REWARM_MINUTES * 60)
+  if (state === 'active') ensureWarm()
 })
 
 // Alarms don't fire while the machine sleeps, so the instance can be cold at

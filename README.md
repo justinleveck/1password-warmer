@@ -96,6 +96,25 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.onepassword-warmer.c
 
 Run from the repo root. Uninstall with `launchctl bootout` and delete the plist.
 
+## Extra: pre-verify Chrome after updates (macOS)
+
+The one stall the warmer can't fully prevent: right after Chrome's updater
+stages a new binary, 1Password's next handshake with its desktop app makes
+macOS hash the entire ~1GB framework with cold signature caches — a 20–40s
+stall for whoever clicks first. The [extras](extras/) LaunchAgent watches
+Chrome's versions directory and runs `codesign --verify` in the background at
+low priority the moment an update lands, so the stall becomes a cache hit.
+
+Install:
+
+```bash
+sed "s|HOME_PLACEHOLDER|$HOME|" extras/com.onepassword-warmer.chrome-preverify.plist \
+  > ~/Library/LaunchAgents/com.onepassword-warmer.chrome-preverify.plist
+launchctl load ~/Library/LaunchAgents/com.onepassword-warmer.chrome-preverify.plist
+```
+
+(Adjust the script path in the plist if the repo isn't at `~/code/1password-warmer`.)
+
 ## Caveats
 
 - Requires Developer mode for unpacked extensions; Chrome occasionally shows a
