@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font: 13px/1.4 -apple-system, system-ui, sans-serif; width: 340px; margin: 0; padding: 12px; }
+  h1 { font-size: 14px; margin: 0 0 8px; }
+  #status { padding: 6px 8px; border-radius: 6px; margin-bottom: 8px; }
+  #status.ok { background: #e6f4ea; color: #137333; }
+  #status.warn { background: #fef7e0; color: #b06000; }
+  #status.bad { background: #fce8e6; color: #c5221f; }
+  .actions { display: flex; gap: 8px; margin-bottom: 8px; }
+  button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid #dadce0; background: #fff; cursor: pointer; }
+  button:hover { background: #f1f3f4; }
+  ol { margin: 0; padding-left: 18px; max-height: 320px; overflow-y: auto; color: #3c4043; }
+  li { margin-bottom: 2px; }
+  li.error { color: #c5221f; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #202124; color: #e8eaed; }
+    button { background: #303134; color: #e8eaed; border-color: #5f6368; }
+    ol { color: #bdc1c6; }
+  }
+</style>
+</head>
+<body>
+<h1>1Password Warmer</h1>
+<div id="status">Checking…</div>
+<div class="actions">
+  <button id="rewarm">Rewarm now</button>
+  <button id="clear">Clear log</button>
+</div>
+<ol id="log" reversed></ol>
+<script src="popup.js"></script>
+</body>
+</html>

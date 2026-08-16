@@ -6,6 +6,12 @@
 # priority, turns that stall into a cache hit. Chrome updates hit the
 # browser-verification path; 1Password app updates hit the same wall from
 # the other side, so both bundles are covered.
+echo "[$(date '+%F %T')] preverify triggered"
 for app in "/Applications/Google Chrome.app" "/Applications/1Password.app"; do
-  nice -n 19 /usr/bin/codesign --verify --deep "$app"
+  started=$SECONDS
+  if nice -n 19 /usr/bin/codesign --verify --deep "$app" 2>&1; then
+    echo "[$(date '+%F %T')] ${app##*/} verified in $((SECONDS - started))s"
+  else
+    echo "[$(date '+%F %T')] ${app##*/} verification FAILED"
+  fi
 done

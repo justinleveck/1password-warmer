@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "1Password Warmer",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Keeps the 1Password extension UI compiled and warm in a hidden minimized window, so the popup opens instantly.",
-  "permissions": ["alarms", "tabs", "idle", "management"],
-  "background": { "service_worker": "background.js" }
+  "permissions": ["alarms", "tabs", "idle", "management", "storage"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html" }
 }
